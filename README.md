@@ -11,7 +11,7 @@ Published at <https://bryan-legend.github.io/stonetop-adventures/>.
 |---|---|---|
 | [Underfalls](https://bryan-legend.github.io/stonetop-adventures/Underfalls.html) | A Rime Lord shrine under the ice falls, Whitefang Mountains | yes |
 | [Vasilya’s Grove](https://bryan-legend.github.io/stonetop-adventures/Vasilyas-Grove.html) | A corrupted Forest seed, deep in the Great Wood | yes |
-| [The Drowned Choir](https://bryan-legend.github.io/stonetop-adventures/Drowned-Choir.html) | A Suarachan lair in a sunken Green Lord hall, Ferrier’s Fen | not yet |
+| [The Drowned Choir](https://bryan-legend.github.io/stonetop-adventures/Drowned-Choir.html) | A Suarachan lair in a Green Lord hall on the Fen’s one hill, Ferrier’s Fen | yes |
 | [The Green Lord’s Tomb](https://bryan-legend.github.io/stonetop-adventures/Green-Lords-Tomb.html) | Sajra the swyn’s lair, a day and a half into the Great Wood | not yet |
 | [Kneeroot](https://bryan-legend.github.io/stonetop-adventures/Kneeroot.html) | The Willow Witches’ abode, somewhere in Ferrier’s Fen | not yet |
 | [The Sealed Cave](https://bryan-legend.github.io/stonetop-adventures/Sealed-Cave.html) | The hills above Stonetop; a Peacebond discovery | not yet |
