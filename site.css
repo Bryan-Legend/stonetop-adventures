@@ -587,3 +587,86 @@
   font-weight: 400;
   font-synthesis-weight: none;
 }
+
+/* --- Optional three.js model under a sheet's SVG map --- */
+.site-map-3d {
+  position: relative;
+  margin-top: 0.75rem;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+  background: var(--bg-elev);
+  cursor: grab;
+}
+.site-map-3d:active {
+  cursor: grabbing;
+}
+.site-map-3d canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+.site-map-3d .map3d-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.map3d-label {
+  pointer-events: auto;
+  font-family: var(--font-serif);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+  color: var(--head);
+  background: rgba(11, 9, 9, 0.72);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.map3d-label:hover,
+.map3d-label:focus {
+  color: var(--link-hover);
+  border-color: var(--head);
+}
+.map3d-label.danger {
+  color: var(--danger);
+}
+.map3d-full {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  z-index: 2;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: var(--head);
+  background: rgba(11, 9, 9, 0.72);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: none;
+}
+.map3d-full:hover,
+.map3d-full:focus {
+  color: var(--link-hover);
+  border-color: var(--head);
+}
+.map3d-full .ico-close {
+  display: none;
+}
+.site-map-3d:fullscreen {
+  aspect-ratio: auto;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+.site-map-3d:fullscreen .map3d-full .ico-open {
+  display: none;
+}
+.site-map-3d:fullscreen .map3d-full .ico-close {
+  display: block;
+}

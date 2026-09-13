@@ -30,7 +30,7 @@
     <span class="nav-label">Areas</span>
     <ul>
       <li><a href="#room-1">Offering-Poles</a></li>
-      <li><a href="#room-2">The Hill Stair</a></li>
+      <li><a href="#room-2">Swallowed Stair</a></li>
       <li><a href="#room-7">The Gallery</a></li>
       <li><a href="#room-3">The Hall</a></li>
       <li><a href="#room-8">Spawn-cistern</a></li>
@@ -230,7 +230,7 @@
   </ul>
   <p class="exits">
     Exits →
-    <a href="#room-2">The Hill Stair</a>
+    <a href="#room-2">Swallowed Stair</a>
     Marshedge trail
   </p>
   <div class="gm-line">
@@ -241,7 +241,7 @@
 </article>
 
 <article class="room" id="room-2">
-  <h2>The Hill Stair</h2>
+  <h2>The Swallowed Stair</h2>
   <span class="tag">Ascent</span>
   <span class="tag danger">Hazard</span>
   <div class="gm-line">
@@ -346,7 +346,7 @@
   <p>A basin under the roof-split holds a little of the same black water as the well. Someone can take a vial.</p>
   <p class="exits">
     Exits →
-    <a href="#room-2">The Hill Stair</a>
+    <a href="#room-2">Swallowed Stair</a>
     <a href="#room-3">The Hall</a> (inner stair, or drop)
     <a href="#room-4">The Larder</a> (ledge, dashed)
   </p>
@@ -405,7 +405,7 @@
   </p>
   <p class="exits">
     Exits →
-    <a href="#room-2">The Hill Stair</a> (the door)
+    <a href="#room-2">Swallowed Stair</a> (the door)
     <a href="#room-7">The Gallery</a> (inner stair)
     <a href="#room-8">Spawn-cistern</a> (left arch)
     <a href="#room-4">The Larder</a> (middle arch)
@@ -511,7 +511,7 @@
     Exits →
     <a href="#room-3">The Hall</a> (middle arch)
     <a href="#room-7">The Gallery</a> (ledge)
-    <a href="#room-2">The Hill Stair</a> (culvert, dashed)
+    <a href="#room-2">Swallowed Stair</a> (culvert, dashed)
   </p>
   <div class="gm-line">
     “Back through the arch, the singing is louder pointed at the black arch beside this one than it
@@ -664,11 +664,11 @@
           <tspan x="230" dy="11">Poles</tspan>
         </text>
       </a>
-      <!-- Hill Stair -->
+      <!-- Swallowed Stair -->
       <a href="#room-2">
         <rect class="map-node" x="90" y="114" width="120" height="32" rx="6" />
         <text class="map-label" x="150" y="129">
-          <tspan x="150" dy="0">The Hill</tspan>
+          <tspan x="150" dy="0">The Swallowed</tspan>
           <tspan x="150" dy="11">Stair</tspan>
         </text>
       </a>
@@ -718,6 +718,10 @@
     The Gallery is above the Hall; the three chambers open off its back wall. Dashed = culvert
     (wet), gallery ledge (dry), and the flooded crack between cistern and Mouth.
   </p>
+  <div class="site-map-3d" id="map-3d" aria-label="Model of the site"></div>
+  <p>
+    The hill, shown hollow. Drag to turn it, scroll to zoom; the labels are links.
+  </p>
 </aside>
 
 </div><!-- .site-layout -->
@@ -726,5 +730,295 @@
 <div id="dice-toast" class="dice-toast" hidden></div>
 <script src="https://stonetop-wiki.github.io/js/wiki.js"></script>
 <script src="site.js"></script>
+<script type="importmap">
+{ "imports": {
+    "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+/* A schematic model of the site under the SVG map: the hollow hill, the stair
+   up its face, the Hall on top with the Gallery above it, the three chambers
+   off the back wall, the well going down through the hill, the culvert out.
+   Same rooms as the SVG, same links. */
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+
+const host = document.getElementById("map-3d");
+if (host) build(host);
+
+function cssVar(name, fallback) {
+  const v = getComputedStyle(document.body).getPropertyValue(name).trim();
+  return v || fallback;
+}
+
+function build(host) {
+  const BG = new THREE.Color(cssVar("--bg-elev", "#1c1a1a"));
+  const FEN = 0x2a3a24, POOL = 0x0e1518, HILL = 0x41563a, HILLTOP = 0x4f6646;
+  const STONE = 0x767e6c, LEDGE = 0x9a9d86, WATER = 0x07080f, JELLY = 0x4c6f42;
+  const WOOD = 0x8f7c5a, LEAF = 0x3c5233, SINGER = 0x4a7048, PALE = 0xd8cfbc;
+
+  const scene = new THREE.Scene();
+  scene.background = BG;
+  scene.fog = new THREE.Fog(BG, 70, 150);
+
+  const camera = new THREE.PerspectiveCamera(40, 4 / 3, 0.1, 400);
+  camera.position.set(22, 17, 31);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  host.appendChild(renderer.domElement);
+
+  const labels = new CSS2DRenderer();
+  labels.domElement.className = "map3d-labels";
+  host.appendChild(labels.domElement);
+
+  if (host.requestFullscreen) {
+    const full = document.createElement("button");
+    full.type = "button";
+    full.className = "map3d-full";
+    full.title = "Full screen";
+    full.setAttribute("aria-label", "Full screen");
+    full.innerHTML =
+      '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path class="ico-open" d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5"/>' +
+      '<path class="ico-close" d="M8 3v5H3M17 8h-5V3M12 17v-5h5M3 12h5v5"/></svg>';
+    full.addEventListener("click", () => {
+      if (document.fullscreenElement === host) document.exitFullscreen();
+      else host.requestFullscreen();
+    });
+    host.appendChild(full);
+  }
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(-1.5, 4.5, -1);
+  controls.enableDamping = true;
+  controls.minDistance = 14;
+  controls.maxDistance = 110;
+  controls.maxPolarAngle = Math.PI / 2 - 0.04;
+  controls.autoRotate = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  controls.autoRotateSpeed = 0.5;
+  controls.addEventListener("start", () => { controls.autoRotate = false; });
+
+  scene.add(new THREE.HemisphereLight(0xb9c4a6, 0x1c1612, 1.7));
+  const sun = new THREE.DirectionalLight(0xe6d8bd, 1.9);
+  sun.position.set(24, 34, 14);
+  scene.add(sun);
+
+  const lam = (color, extra) => new THREE.MeshLambertMaterial(Object.assign({ color }, extra || {}));
+  const glass = (color, opacity) =>
+    lam(color, { transparent: true, opacity, depthWrite: false });
+  const box = (w, h, d, mat, x, y, z) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z);
+    scene.add(m);
+    return m;
+  };
+
+  /* ---- the Fen: a ring, open under the hill so the well shows ---- */
+  const fen = new THREE.Mesh(new THREE.RingGeometry(21, 90, 64), lam(FEN));
+  fen.rotation.x = -Math.PI / 2;
+  fen.position.z = -4;
+  scene.add(fen);
+  const poolMat = lam(POOL);
+  [[-30, 30, 7], [26, 28, 5], [-34, -4, 6], [30, -22, 8], [-8, 40, 4], [8, -34, 5], [40, 8, 4]]
+    .forEach(([x, z, r]) => {
+      const pool = new THREE.Mesh(new THREE.CircleGeometry(r, 24), poolMat);
+      pool.rotation.x = -Math.PI / 2;
+      pool.position.set(x, 0.02, z);
+      scene.add(pool);
+    });
+
+  /* ---- the Offering-Poles, under three willows, on the Marshedge side ---- */
+  const poleMat = lam(WOOD);
+  [[-19.2, 22.4, 2.6], [-16.1, 23.0, 2.2], [-20.6, 25.3, 2.0], [-17.4, 26.1, 2.5], [-14.3, 25.6, 2.3],
+   [-18.8, 28.4, 2.1], [-15.7, 28.9, 2.6], [-13.1, 22.1, 1.9], [-21.9, 28.0, 2.3], [-12.6, 27.7, 2.4],
+   [-17.0, 30.8, 2.0], [-20.3, 31.5, 2.2]]
+    .forEach(([x, z, h], i) => {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, h, 6), poleMat);
+      pole.position.set(x, h / 2, z);
+      pole.rotation.z = ((i % 5) - 2) * 0.05;
+      pole.rotation.x = ((i % 3) - 1) * 0.06;
+      scene.add(pole);
+    });
+  [[-22, 21], [-13, 30], [-21, 30]].forEach(([x, z]) => {
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.5, 4, 8), poleMat);
+    trunk.position.set(x, 2, z);
+    scene.add(trunk);
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(3.2, 12, 10), lam(LEAF));
+    crown.scale.set(1, 0.7, 1);
+    crown.position.set(x, 5.2, z);
+    scene.add(crown);
+  });
+
+  /* ---- the hill, hollow ---- */
+  const hill = new THREE.Mesh(
+    new THREE.CylinderGeometry(13, 21, 6, 64, 1, true),
+    glass(HILL, 0.55)
+  );
+  hill.material.side = THREE.DoubleSide;
+  hill.position.set(0, 3, -4);
+  hill.renderOrder = 3;
+  scene.add(hill);
+  const top = new THREE.Mesh(new THREE.CircleGeometry(13, 64), glass(HILLTOP, 0.8));
+  top.rotation.x = -Math.PI / 2;
+  top.position.set(0, 6, -4);
+  top.renderOrder = 2;
+  scene.add(top);
+
+  /* ---- the Swallowed Stair: up the front face, a sheet of black water down it ---- */
+  const stoneMat = lam(STONE);
+  for (let i = 0; i < 20; i++) {
+    box(3, 0.3, 0.7, stoneMat, 0, 0.15 + i * 0.3, 17 - i * 0.4);
+  }
+  box(3, 0.16, 2.2, stoneMat, 0, 6.08, 8.1);                       // the landing to the door
+  const seep = box(0.9, 0.04, 10.2, lam(WATER), 0, 3.25, 13.2);
+  seep.rotation.x = Math.atan2(6, 8);
+
+  /* ---- the Hall: floor, translucent walls with the door and three arches ---- */
+  box(8.8, 0.3, 14.4, stoneMat, 0, 6.15, 0);
+  const wall = glass(STONE, 0.42);
+  box(0.4, 3.6, 14.4, wall, -4.2, 8.1, 0);
+  box(0.4, 3.6, 14.4, wall, 4.2, 8.1, 0);
+  box(3.4, 3.6, 0.4, wall, -2.7, 8.1, 7.2);                         // front wall, door in the middle
+  box(3.4, 3.6, 0.4, wall, 2.7, 8.1, 7.2);
+  box(2, 1.2, 0.4, wall, 0, 9.3, 7.2);
+  [[-3.95, 0.9], [-1.4, 1.4], [1.4, 1.4], [3.95, 0.9]]             // back wall, three arches
+    .forEach(([x, w]) => box(w, 2.4, 0.4, wall, x, 7.5, -7.2));
+  box(8.8, 1.2, 0.4, wall, 0, 9.3, -7.2);
+
+  /* the Gallery: a ledge round the hall above head height, and the inner stair to it */
+  const ledgeMat = lam(LEDGE);
+  box(1.2, 0.2, 14, ledgeMat, -3.4, 8.7, 0);
+  box(1.2, 0.2, 14, ledgeMat, 3.4, 8.7, 0);
+  box(8, 0.2, 1.2, ledgeMat, 0, 8.7, -6.4);
+  box(5.4, 0.2, 1.2, ledgeMat, -1.3, 8.7, 6.4);
+  const inner = box(0.9, 0.16, 3.6, ledgeMat, 3.4, 7.5, 4.4);
+  inner.rotation.x = -Math.atan2(2.4, 3.2);
+
+  /* the channel of black water down the floor, bending to the right-hand arch */
+  const chanMat = lam(WATER);
+  box(0.8, 0.06, 11, chanMat, 0, 6.33, 1);
+  const bend = box(0.8, 0.06, 4, chanMat, 1.45, 6.33, -5.9);
+  bend.rotation.y = Math.atan2(-2.9, 2.7);
+
+  /* the Singers: on every ledge, eyes shut */
+  const singer = new THREE.InstancedMesh(
+    new THREE.SphereGeometry(0.17, 6, 5), lam(SINGER), 240
+  );
+  const m4 = new THREE.Matrix4();
+  let n = 0;
+  const seat = (x, y, z) => { m4.makeTranslation(x, y, z); singer.setMatrixAt(n++, m4); };
+  for (let i = 0; i < 36; i++) {
+    const z = -6.3 + i * 0.36;
+    seat(-3.85, 6.45, z); seat(3.85, 6.45, z);                       // along the floor's edges
+    seat(-3.4, 8.95, z + 0.18); seat(3.4, 8.95, z + 0.18);            // on the gallery
+    if (i < 22) { seat(-3.9 + i * 0.36, 6.45, -6.9); seat(-3.9 + i * 0.36, 8.95, -6.4); }
+  }
+  singer.count = n;
+  scene.add(singer);
+
+  /* ---- the three chambers off the back wall ---- */
+  // the Spawn-cistern, left
+  const cistern = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 3, 28, 1, true), glass(STONE, 0.42));
+  cistern.material.side = THREE.DoubleSide;
+  cistern.position.set(-3.6, 7.8, -10.2);
+  scene.add(cistern);
+  const jelly = new THREE.Mesh(new THREE.CircleGeometry(2.1, 28), lam(JELLY, { transparent: true, opacity: 0.85 }));
+  jelly.rotation.x = -Math.PI / 2;
+  jelly.position.set(-3.6, 7.0, -10.2);
+  scene.add(jelly);
+  const egg = lam(0x6f8a5a);
+  for (let i = 0; i < 7; i++) {
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.22, 6, 5), egg);
+    const a = i * 0.9;
+    e.position.set(-3.6 + Math.cos(a) * (0.5 + (i % 3) * 0.45), 7.05, -10.2 + Math.sin(a) * (0.5 + (i % 3) * 0.45));
+    scene.add(e);
+  }
+  // the Larder, middle: a long dry chamber, cages hung the length of it, the sump at the far end
+  box(3.6, 0.3, 8, stoneMat, 0, 6.15, -11.4);
+  box(0.3, 3, 8, wall, -1.8, 7.8, -11.4);
+  box(0.3, 3, 8, wall, 1.8, 7.8, -11.4);
+  box(3.6, 3, 0.3, wall, 0, 7.8, -15.4);
+  const cage = lam(WOOD);
+  for (let i = 0; i < 6; i++) {
+    box(0.7, 0.9, 0.7, cage, (i % 2 ? 0.95 : -0.95), 6.75, -8.6 - i * 1.05);
+  }
+  const sump = new THREE.Mesh(new THREE.CircleGeometry(0.8, 20), chanMat);
+  sump.rotation.x = -Math.PI / 2;
+  sump.position.set(0, 6.32, -14.4);
+  scene.add(sump);
+  // the Dreaming Mouth, right: a chamber with no floor
+  box(0.3, 3, 4.4, wall, 1.6, 7.8, -10.2);
+  box(0.3, 3, 4.4, wall, 5.8, 7.8, -10.2);
+  box(4.4, 3, 0.3, wall, 3.7, 7.8, -12.4);
+  const lip = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.2, 32), stoneMat);
+  lip.rotation.x = -Math.PI / 2;
+  lip.position.set(3.7, 6.31, -10.2);
+  scene.add(lip);
+  const well = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 14, 32), lam(WATER));
+  well.position.set(3.7, -0.7, -10.2);
+  scene.add(well);
+
+  /* ---- under the hill: what the singing is aimed at ---- */
+  const sleeper = new THREE.Mesh(new THREE.SphereGeometry(4, 20, 14), glass(PALE, 0.42));
+  sleeper.scale.set(2.4, 0.7, 1.5);
+  sleeper.position.set(0, -10, -3);
+  sleeper.renderOrder = 1;
+  scene.add(sleeper);
+
+  /* ---- the wet ways: the culvert out, and the crack between cistern and well ---- */
+  const tube = (points, r) => {
+    const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p)));
+    const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, r, 8, false), chanMat);
+    scene.add(m);
+    return m;
+  };
+  tube([[0, 5.8, -14.4], [-5, 3.6, -8], [-11, 1.4, 2], [-17.5, 0.3, 8.5]], 0.3);   // the culvert
+  tube([[-3.6, 5.5, -10.2], [0, 5.3, -10.2], [3.7, 5.5, -10.2]], 0.22);      // the flooded crack
+
+  /* ---- labels: the same links as the SVG ---- */
+  const label = (text, href, x, y, z, danger) => {
+    const a = document.createElement("a");
+    a.className = "map3d-label" + (danger ? " danger" : "");
+    a.href = href;
+    a.textContent = text;
+    const o = new CSS2DObject(a);
+    o.position.set(x, y, z);
+    scene.add(o);
+  };
+  label("Offering-Poles", "#room-1", -17, 4.6, 27);
+  label("Swallowed Stair", "#room-2", 3.8, 4, 14);
+  label("Hall", "#room-3", 0, 7.4, 1.5);
+  label("Gallery", "#room-7", -3.4, 10.4, -2);
+  label("Spawn-cistern", "#room-8", -4.6, 10.3, -9.4);
+  label("Larder", "#room-4", 0, 12.4, -15);
+  label("Dreaming Mouth", "#room-5", 4.8, 10.3, -9.4, true);
+
+  /* ---- size to the sidebar, and draw ---- */
+  function size() {
+    const w = host.clientWidth || 300, h = host.clientHeight || Math.round(w * 0.75);
+    renderer.setSize(w, h, false);
+    labels.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  size();
+  if (typeof ResizeObserver === "function") new ResizeObserver(size).observe(host);
+  else window.addEventListener("resize", size);
+
+  let shown = true;
+  if (typeof IntersectionObserver === "function") {
+    new IntersectionObserver((es) => { shown = es[0].isIntersecting; }).observe(host);
+  }
+  renderer.setAnimationLoop(() => {
+    if (!shown) return;
+    controls.update();
+    renderer.render(scene, camera);
+    labels.render(scene, camera);
+  });
+}
+</script>
 </body>
 </html>
