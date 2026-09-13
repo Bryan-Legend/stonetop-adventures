@@ -736,85 +736,17 @@
     "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
 } }
 </script>
-<script type="module">
+<script src="site-model.js"></script>
+<script>
 /* A schematic model of the site under the SVG map: the hollow hill, the stair
    up its face, the Hall on top with the Gallery above it, the three chambers
    off the back wall, the well going down through the hill, the culvert out.
-   Same rooms as the SVG, same links. */
-import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
-
-const host = document.getElementById("map-3d");
-if (host) build(host);
-
-function cssVar(name, fallback) {
-  const v = getComputedStyle(document.body).getPropertyValue(name).trim();
-  return v || fallback;
-}
-
-function build(host) {
-  const BG = new THREE.Color(cssVar("--bg-elev", "#1c1a1a"));
+   Same rooms as the SVG, same links. Chrome and helpers: site-model.js. */
+mountSiteModel(document.getElementById("map-3d"), function (kit) {
+  const { THREE, scene, lam, glass, box, tube, label } = kit;
   const FEN = 0x2a3a24, POOL = 0x0e1518, HILL = 0x41563a, HILLTOP = 0x4f6646;
   const STONE = 0x767e6c, LEDGE = 0x9a9d86, WATER = 0x07080f, JELLY = 0x4c6f42;
   const WOOD = 0x8f7c5a, LEAF = 0x3c5233, SINGER = 0x4a7048, PALE = 0xd8cfbc;
-
-  const scene = new THREE.Scene();
-  scene.background = BG;
-  scene.fog = new THREE.Fog(BG, 70, 150);
-
-  const camera = new THREE.PerspectiveCamera(40, 4 / 3, 0.1, 400);
-  camera.position.set(22, 17, 31);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  host.appendChild(renderer.domElement);
-
-  const labels = new CSS2DRenderer();
-  labels.domElement.className = "map3d-labels";
-  host.appendChild(labels.domElement);
-
-  if (host.requestFullscreen) {
-    const full = document.createElement("button");
-    full.type = "button";
-    full.className = "map3d-full";
-    full.title = "Full screen";
-    full.setAttribute("aria-label", "Full screen");
-    full.innerHTML =
-      '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path class="ico-open" d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5"/>' +
-      '<path class="ico-close" d="M8 3v5H3M17 8h-5V3M12 17v-5h5M3 12h5v5"/></svg>';
-    full.addEventListener("click", () => {
-      if (document.fullscreenElement === host) document.exitFullscreen();
-      else host.requestFullscreen();
-    });
-    host.appendChild(full);
-  }
-
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(-1.5, 4.5, -1);
-  controls.enableDamping = true;
-  controls.minDistance = 14;
-  controls.maxDistance = 110;
-  controls.maxPolarAngle = Math.PI / 2 - 0.04;
-  controls.autoRotate = !matchMedia("(prefers-reduced-motion: reduce)").matches;
-  controls.autoRotateSpeed = 0.5;
-  controls.addEventListener("start", () => { controls.autoRotate = false; });
-
-  scene.add(new THREE.HemisphereLight(0xb9c4a6, 0x1c1612, 1.7));
-  const sun = new THREE.DirectionalLight(0xe6d8bd, 1.9);
-  sun.position.set(24, 34, 14);
-  scene.add(sun);
-
-  const lam = (color, extra) => new THREE.MeshLambertMaterial(Object.assign({ color }, extra || {}));
-  const glass = (color, opacity) =>
-    lam(color, { transparent: true, opacity, depthWrite: false });
-  const box = (w, h, d, mat, x, y, z) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-    m.position.set(x, y, z);
-    scene.add(m);
-    return m;
-  };
 
   /* ---- the Fen: a ring, open under the hill so the well shows ---- */
   const fen = new THREE.Mesh(new THREE.RingGeometry(21, 90, 64), lam(FEN));
@@ -969,56 +901,20 @@ function build(host) {
   scene.add(sleeper);
 
   /* ---- the wet ways: the culvert out, and the crack between cistern and well ---- */
-  const tube = (points, r) => {
-    const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p)));
-    const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, r, 8, false), chanMat);
-    scene.add(m);
-    return m;
-  };
-  tube([[0, 5.8, -14.4], [-5, 3.6, -8], [-11, 1.4, 2], [-17.5, 0.3, 8.5]], 0.3);   // the culvert
-  tube([[-3.6, 5.5, -10.2], [0, 5.3, -10.2], [3.7, 5.5, -10.2]], 0.22);      // the flooded crack
+  tube([[0, 5.8, -14.4], [-5, 3.6, -8], [-11, 1.4, 2], [-17.5, 0.3, 8.5]], 0.3, chanMat);   // the culvert
+  tube([[-3.6, 5.5, -10.2], [0, 5.3, -10.2], [3.7, 5.5, -10.2]], 0.22, chanMat);      // the flooded crack
 
-  /* ---- labels: the same links as the SVG ---- */
-  const label = (text, href, x, y, z, danger) => {
-    const a = document.createElement("a");
-    a.className = "map3d-label" + (danger ? " danger" : "");
-    a.href = href;
-    a.textContent = text;
-    const o = new CSS2DObject(a);
-    o.position.set(x, y, z);
-    scene.add(o);
-  };
   label("Offering-Poles", "#room-1", -17, 4.6, 27);
   label("Swallowed Stair", "#room-2", 3.8, 4, 14);
   label("Hall", "#room-3", 0, 7.4, 1.5);
   label("Gallery", "#room-7", -3.4, 10.4, -2);
   label("Spawn-cistern", "#room-8", -4.6, 10.3, -9.4);
   label("Larder", "#room-4", 0, 12.4, -15);
-  label("Dreaming Mouth", "#room-5", 4.8, 10.3, -9.4, true);
+  label("Dreaming Mouth", "#room-5", 4.8, 10.3, -9.4, "danger");
 
-  /* ---- size to the sidebar, and draw ---- */
-  function size() {
-    const w = host.clientWidth || 300, h = host.clientHeight || Math.round(w * 0.75);
-    renderer.setSize(w, h, false);
-    labels.setSize(w, h);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-  }
-  size();
-  if (typeof ResizeObserver === "function") new ResizeObserver(size).observe(host);
-  else window.addEventListener("resize", size);
 
-  let shown = true;
-  if (typeof IntersectionObserver === "function") {
-    new IntersectionObserver((es) => { shown = es[0].isIntersecting; }).observe(host);
-  }
-  renderer.setAnimationLoop(() => {
-    if (!shown) return;
-    controls.update();
-    renderer.render(scene, camera);
-    labels.render(scene, camera);
-  });
-}
+  return { camera: [22, 17, 31], target: [-1.5, 4.5, -1] };
+});
 </script>
 </body>
 </html>

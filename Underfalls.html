@@ -1046,6 +1046,10 @@
     <a href="#node-3">Ice Falls</a> ·
     <a href="#node-6">Cistern</a> (Fae door while drifts hold).
   </p>
+  <div class="site-map-3d" id="map-3d" aria-label="Model of the site"></div>
+  <p>
+    The shrine cut into the cliff, its galleries between the rooms. Drag to turn it, scroll to zoom; the labels are links.
+  </p>
 </aside>
 
 </div><!-- .site-layout -->
@@ -1054,5 +1058,192 @@
 <div id="dice-toast" class="dice-toast" hidden></div>
 <script src="https://stonetop-wiki.github.io/js/wiki.js"></script>
 <script src="site.js"></script>
+<script type="importmap">
+{ "imports": {
+    "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script src="site-model.js"></script>
+<script>
+/* The shrine as a cliff-side: the stair up from the valley floor to a first
+   terrace, and the rooms cut into the face above it in three columns — the
+   SVG's columns, stood on end. Every way between two rooms is a covered
+   gallery across the rock from one room's side door to the other's: a
+   flight where it climbs, a bridge where it runs level, a switchback on the
+   outer edges where one room sits straight above another. Rooms are
+   open-fronted, so you see in. Same nodes as the SVG. */
+mountSiteModel(document.getElementById("map-3d"), function (kit) {
+  const { THREE, scene, lam, glass, box, disc, tube, label } = kit;
+  const SNOW = 0xd9dbe0, ROCK = 0x4a484e, FACE = 0x605d64, ROOM = 0x9b979f, FLOOR = 0x7e7a84;
+  const ICE = 0x2f5f56, DARKICE = 0x1a2430, WATER = 0x07080f, STEP = 0xa7a3ab;
+  const CLOTH = 0x8a3a3a, MEADOW = 0x4f7a3c, BLOOM = 0xc76b8a, FLAG = [0xc74a3a, 0xd9b84a, 0x4a7fc7, 0x5aa15a, 0xe6e2d8];
+  const S = [8.3, 14.2, 20.2, 26.2, 32.2, 38.2];                       // the storeys' floor heights
+
+  /* ---- the valley floor, and the cliff ---- */
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(160, 70), lam(SNOW));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, 0, 35);
+  scene.add(floor);
+  box(82, 46, 24, lam(ROCK), 0, 23, -20);                              // the mass of the mountain
+  box(82, 46, 0.6, lam(FACE), 0, 23, -7.6);                             // its face, proud of the mass so the two never share a plane
+  box(82, 0.6, 24, lam(SNOW), 0, 46.45, -20);                           // snow on top
+  const peak = new THREE.Mesh(new THREE.ConeGeometry(20, 16, 5), lam(SNOW));
+  peak.position.set(-4, 54, -26);
+  scene.add(peak);
+
+  /* ---- a room built out from the face, its front open ---- */
+  const wallMat = lam(ROOM), floorMat = lam(FLOOR), stepMat = lam(STEP);
+  const room = (x, y, w, h, d) => {
+    box(w, 0.3, d, floorMat, x, y + 0.15, -d / 2);
+    box(0.3, h, d, wallMat, x - w / 2 + 0.15, y + h / 2, -d / 2);
+    box(0.3, h, d, wallMat, x + w / 2 - 0.15, y + h / 2, -d / 2);
+    box(w, h, 0.3, wallMat, x, y + h / 2, -d + 0.15);
+    box(w, 0.3, d, wallMat, x, y + h - 0.15, -d / 2);
+  };
+  /* a gallery across the face from one door to another: a floor with treads
+     where it climbs, a parapet on the valley side, a roof, open to the valley */
+  const parapetMat = lam(0x8f8b95), roofMat = lam(0x76727c), treadMat = lam(0x6b6771);
+  const gallery = (from, to) => {
+    const dx = to[0] - from[0], dy = to[1] - from[1];
+    const L = Math.hypot(dx, dy);
+    const g = new THREE.Group();
+    g.position.set((from[0] + to[0]) / 2, (from[1] + to[1]) / 2 + 0.2, -1.2);
+    g.rotation.z = Math.atan2(dy, dx);
+    const add = (w, h, d, mat, x, y, z) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(x, y, z);
+      g.add(m);
+    };
+    add(L + 0.8, 0.3, 2.2, stepMat, 0, 0, 0);                            // the floor
+    if (Math.abs(dy) > 0.5) for (let x = -L / 2; x <= L / 2; x += 0.55) add(0.1, 0.06, 2.2, treadMat, x, 0.18, 0);
+    add(L + 0.8, 1.1, 0.22, parapetMat, 0, 0.7, 1.0);                    // the parapet, valley side
+    add(L + 0.8, 0.22, 2.4, roofMat, 0, 2.6, 0);                         // the roof
+    scene.add(g);
+  };
+  /* a landing where two flights meet */
+  const landing = (x, y) => box(2.4, 0.3, 2.4, stepMat, x, y + 0.2, -1.2);
+
+  /* ---- 1 · the Prayer-Flag Stair, up from the valley to the first terrace ---- */
+  for (let i = 0; i < 20; i++) box(3, 0.4, 0.9, stepMat, 0, 0.2 + i * 0.4, 8 - i * 0.45);
+  for (let i = 0; i < 6; i++) {
+    const y = 1.6 + i * 1.3, z = 7 - i * 1.4;
+    box(6, 0.05, 0.05, lam(0x3a3230), 0, y + 0.9, z);
+    for (let k = 0; k < 5; k++) box(0.55, 0.45, 0.04, lam(FLAG[(i + k) % 5]), -2.2 + k * 1.1, y + 0.6, z);
+  }
+  const drift = lam(0xe8eaee);
+  [[-3.4, 1.4, 6], [3.6, 1.0, 7.5], [-4, 3.6, 2.6], [4.2, 4.2, 1.4], [-2.8, 6.4, -1]].forEach(([x, y, z]) => {
+    const d = new THREE.Mesh(new THREE.SphereGeometry(1.4, 10, 8), drift);
+    d.scale.set(1.3, 0.55, 1);
+    d.position.set(x, y, z);
+    scene.add(d);
+  });
+  box(10, 0.4, 3.5, floorMat, 0, S[0] - 0.1, -1.8);                    // the first terrace, x −5…5
+
+  /* ---- 2 · the Vigil's Cloister: cells round a swept square, on a ledge to the left (x −25…−13) ---- */
+  box(12, 0.4, 6, floorMat, -19, S[0] - 0.1, -3);
+  [[-23.4, -1.4], [-23.4, -5], [-14.6, -1.4], [-14.6, -5]].forEach(([x, z]) => box(3.2, 2, 2.6, wallMat, x, S[0] + 1.1, z));
+  box(2.6, 0.06, 2.6, lam(0xb0acb4), -19, S[0] + 0.14, -3.2);           // the square
+  box(0.5, 1.4, 0.5, lam(CLOTH), -19, S[0] + 0.8, -2.2);               // the vigil, scraping a step
+
+  /* ---- 3 · the Ice Falls: a frozen curtain the whole height of the cliff, the ledge behind it (x 13…31) ---- */
+  const falls = box(6, 46, 0.9, glass(ICE, 0.72), 28, 23, 0.4);
+  falls.renderOrder = 4;
+  box(18, 0.4, 6, floorMat, 22, S[0] - 0.1, -3);                        // the ledge behind it
+  box(6, 3.2, 3, lam(0x0f1614), 28, S[0] + 1.7, -6.5);                  // the hollow, dark, names in the ice
+  box(6, 1.2, 0.5, glass(0x8fbfb3, 0.5), 28, 3, 0.9);                   // rime where the curtain meets the floor
+
+  /* ---- the shrine, cut into the face in three columns ---- */
+  // 4 · Hall of Chants, centre, first storey (x −5…5): pillars carved with mouths
+  room(0, S[1], 10, 4.2, 8);
+  for (let i = 0; i < 4; i++) { box(0.5, 3.6, 0.5, wallMat, -2, S[1] + 2.1, -1.5 - i * 1.7); box(0.5, 3.6, 0.5, wallMat, 2, S[1] + 2.1, -1.5 - i * 1.7); }
+  // 5 · the Apes' Hoard, left, second storey (x −24…−14): stacked, a blanket in the middle
+  room(-19, S[2], 10, 3.6, 6);
+  for (let i = 0; i < 9; i++) { const h = 0.4 + (i % 3) * 0.3; box(0.7, h, 0.7, lam(0xa39d8a), -22.4 + (i % 3) * 1.0, S[2] + 0.3 + h / 2, -1.6 - Math.floor(i / 3) * 1.1); }
+  box(1.6, 0.08, 1.2, lam(0x5a3a4a), -18, S[2] + 0.35, -3);
+  for (let i = 0; i < 5; i++) box(0.18, 0.18, 0.18, lam(0x8a5aa0), -18.5 + i * 0.25, S[2] + 0.48, -3);
+  // 6 · the Cistern Cave, right, second storey (x 14…24): black water under a dome, the drift in its far wall
+  room(19, S[2], 10, 4.4, 7);
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(3.6, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), glass(ROOM, 0.35));
+  dome.material.side = THREE.DoubleSide;
+  dome.position.set(19, S[2] + 0.3, -3.5);
+  scene.add(dome);
+  disc(3, lam(WATER), 19, S[2] + 0.36, -3.5);
+  const drift6 = new THREE.Mesh(new THREE.SphereGeometry(1.8, 12, 8), drift);
+  drift6.scale.set(1.3, 0.7, 0.6);
+  drift6.position.set(19, S[2] + 0.9, -6.2);
+  scene.add(drift6);
+  box(1.2, 0.5, 0.3, lam(0xe0a04a), 19, S[2] + 1.6, -6.8);              // firelight past it
+  // 7 · the Gate of Quiet, centre, third storey (x −4…4): dark ice, and the shape in it
+  room(0, S[3], 8, 4.2, 5);
+  box(0.8, 3.6, 0.8, wallMat, -2, S[3] + 2.1, -3.4); box(0.8, 3.6, 0.8, wallMat, 2, S[3] + 2.1, -3.4);
+  const gate = box(3.2, 3.6, 0.3, glass(DARKICE, 0.85), 0, S[3] + 2.1, -3.4);
+  gate.renderOrder = 4;
+  const cold = new THREE.Mesh(new THREE.ConeGeometry(0.6, 2.4, 8), glass(0xbfd6e6, 0.65));
+  cold.position.set(0, S[3] + 1.6, -2.4);
+  scene.add(cold);
+  // 8 · the Stilled Meadow, centre, fourth storey (x −9…9): spring, under the mountain
+  room(0, S[4], 18, 4.6, 8);
+  disc(6.5, lam(MEADOW), 0, S[4] + 0.33, -4);
+  for (let i = 0; i < 16; i++) {
+    const a = i * 1.9, r = 1 + (i % 4) * 1.3;
+    box(0.22, 0.22, 0.22, lam(BLOOM), Math.cos(a) * r, S[4] + 0.6 + (i % 2) * 0.35, -4 + Math.sin(a) * r);
+  }
+  box(0.5, 1.1, 0.5, lam(0x7a7266), 1.2, S[4] + 0.9, -3);              // the old man, sitting
+  // 9 · the Reliquary, left, top (x −24…−14): nine alcoves, nine kneeling figures of ice
+  room(-19, S[5], 10, 3.8, 6);
+  const kneel = glass(0xb9c6cc, 0.85);
+  for (let i = 0; i < 9; i++) {
+    const a = Math.PI + (i - 4) * 0.36, r = 3.4;
+    const f = box(0.5, 0.9, 0.5, i === 8 ? lam(0xb9c6cc) : kneel, -19 + Math.cos(a) * r * 1.1, S[5] + 0.75, -3.6 + Math.sin(a) * r * 0.75);
+    if (i === 8) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.07, 8, 16), lam(0xc9a95a)); t.position.set(f.position.x, S[5] + 1.35, f.position.z); scene.add(t); }
+  }
+  // 10 · the Vault of Quiet, right, top (x 14…24): a round chamber of dark ice, the cyst in the floor
+  room(19, S[5], 10, 3.8, 7);
+  const vault = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 3.4, 32, 1, true, Math.PI * 0.55, Math.PI * 1.9), glass(DARKICE, 0.6));
+  vault.material.side = THREE.DoubleSide;
+  vault.position.set(19, S[5] + 2, -3.5);
+  scene.add(vault);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(1.1, 1.5, 24), lam(0xb0a8b8));
+  ring.rotation.x = -Math.PI / 2; ring.position.set(19, S[5] + 0.34, -3.5); scene.add(ring);
+  const cyst = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), glass(DARKICE, 0.9));
+  cyst.material.side = THREE.DoubleSide;
+  cyst.position.set(19, S[5] + 0.36, -3.5);
+  scene.add(cyst);
+
+  /* ---- the ways between, door to door, as the SVG has them ---- */
+  gallery([-13, S[0]], [-5, S[0]]);                                    // 1 → 2: the terrace runs to the cloister's ledge
+  gallery([5, S[0]], [13, S[0]]);                                      // 1 → 3: and to the ledge behind the falls
+  gallery([-13, S[0]], [-5, S[1]]);                                    // 2 → 4: cloister's right door up to the Hall's left door
+  gallery([13, S[0]], [5, S[1]]);                                      // 3 → 4: the falls' ledge up to the Hall's right door
+  gallery([-25, S[0]], [-31, S[1]]); landing(-31, S[1]);               // 2 → 5: a switchback on the cliff's left edge,
+  gallery([-31, S[1]], [-24, S[2]]);                                   //        cloister's left end up to the Hoard's left door
+  gallery([31, S[0]], [37, S[1]]); landing(37, S[1]);                  // 3 → 6: the same on the right, up behind the falls
+  gallery([37, S[1]], [24, S[2]]);                                     //        to the Cistern's right door
+  gallery([-5, S[1]], [-14, S[2]]);                                    // 4 → 5: Hall's left door up to the Hoard's right door
+  landing(-14, S[2]);                                                  //        (4 → 7 turns here, outside the Hoard's door)
+  gallery([-14, S[2]], [-4, S[3]]);                                    // 4 → 7: and on up to the Gate's left door
+  gallery([-14, S[2]], [14, S[2]]);                                    // 5 → 6: a bridge across the face, Hoard to Cistern
+  gallery([14, S[2]], [4, S[3]]);                                      // 6 → 7: Cistern's left door up to the Gate's right door
+  gallery([4, S[3]], [9, S[4]]);                                       // 7 → 8: Gate's right door up to the Meadow's right door
+  gallery([-9, S[4]], [-14, S[5]]);                                    // 8 → 9: Meadow's left door up to the Reliquary
+  gallery([9, S[4]], [14, S[5]]);                                      // 8 → 10: its right door up to the Vault
+  gallery([-14, S[5]], [14, S[5]]);                                    // 9 → 10: a bridge across the top
+
+  /* ---- labels: the same links as the SVG ---- */
+  label("Prayer-Flag Stair", "#node-1", 3.6, 4.5, 4);
+  label("Vigil’s Cloister", "#node-2", -19, S[0] + 4, -1);
+  label("Ice Falls", "#node-3", 28, S[0] + 4.6, 1);
+  label("Hall of Chants", "#node-4", 0, S[1] + 5, 0);
+  label("Apes’ Hoard", "#node-5", -19, S[2] + 4.4, 0);
+  label("Cistern Cave", "#node-6", 19, S[2] + 5.2, 0);
+  label("Gate of Quiet", "#node-7", 0, S[3] + 5, 0);
+  label("Stilled Meadow", "#node-8", 0, S[4] + 5.4, 0);
+  label("Reliquary", "#node-9", -19, S[5] + 4.6, 0);
+  label("Vault of Quiet", "#node-10", 19, S[5] + 4.6, 0, "danger");
+
+  return { camera: [26, 30, 84], target: [0, 22, -3], maxDistance: 180, azimuth: [-1.1, 1.1] };
+});
+</script>
 </body>
 </html>

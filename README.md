@@ -43,6 +43,12 @@ Ticked boxes, HP and written answers are kept in the browser and can be shared w
 the whole table through the wiki's campaign sync (the **Campaign** panel in the
 sidebar).
 
+A sheet can carry a small **three.js model** of the site under its map: a
+`div.site-map-3d` in the map sidebar, an import map for three, `site-model.js`
+(the shared mount: renderer, orbit, labels, fullscreen button), and a short inline
+script that builds the geometry and returns the camera. The labels are the same
+room links as the SVG. Underfalls, Vasilya’s Grove and the Drowned Choir have one.
+
 ## Rulebook text
 
 The books' text quoted on these sheets is from *Stonetop* and *Stonetop: The Wider
