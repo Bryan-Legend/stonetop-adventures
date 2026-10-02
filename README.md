@@ -1,6 +1,6 @@
 # Stonetop Adventures
 
-Adventure sites for the [Stonetop](https://stonetop-wiki.github.io/welcome-to-stonetop.html)
+Adventure sites for the [Stonetop](https://stonetop.cc/welcome-to-stonetop.html)
 tabletop RPG, written to be run straight off the screen: prep, travel, room-by-room
 notes and stat blocks on one sheet, with clickable dice, HP trackers and hover
 previews of the rulebook pages each site draws on.
@@ -21,7 +21,7 @@ Published at <https://bryan-legend.github.io/stonetop-adventures/>.
 
 Every sheet is one hand-written HTML file. The shared chrome is `site.css` and
 `site.js` beside them; the rest — palette, faces, dice rollers, HP trackers,
-hover previews, campaign sync — is the [Stonetop Wiki](https://stonetop-wiki.github.io/)'s
+hover previews, campaign sync — is the [Stonetop Wiki](https://stonetop.cc/)'s
 own `css/wiki.css` and `js/wiki.js`, loaded from the published wiki by absolute
 URL, so the sheets need a connection to look right and the wiki's chrome never
 has to be copied here.
@@ -36,7 +36,7 @@ A sheet's `<body>` carries:
 | `data-playtested` | `"true"` once the site has been run at a table |
 
 Links into the rulebook are `<a class="wiki-link" data-slug="…">` pointing at
-`https://stonetop-wiki.github.io/<slug>.html`; the wiki's script turns them into
+`https://stonetop.cc/<slug>.html`; the wiki's script turns them into
 hover cards.
 
 Ticked boxes, HP and written answers are kept in the browser and can be shared with

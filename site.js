@@ -1,6 +1,6 @@
 /* Shared Stonetop adventure-site sheet behavior.
  * Sheets live in the stonetop-adventures repo. Expect body.site-sheet with:
- *   data-wiki-root="https://stonetop-wiki.github.io/"   (the published wiki)
+ *   data-wiki-root="https://stonetop.cc/"   (the published wiki)
  *   data-hp-storage="unique-key-for-localStorage"
  *
  * Wiki hover popups come from wiki.js + previews-data.js. When those data
@@ -10,7 +10,7 @@
 (function () {
   var body = document.body;
   var WIKI =
-    (body && body.getAttribute("data-wiki-root")) || "https://stonetop-wiki.github.io/";
+    (body && body.getAttribute("data-wiki-root")) || "https://stonetop.cc/";
   if (WIKI.slice(-1) !== "/") WIKI += "/";
 
   var bubble = document.getElementById("wiki-preview");
